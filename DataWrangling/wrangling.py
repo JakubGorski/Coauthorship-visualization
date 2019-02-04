@@ -47,7 +47,7 @@ def clean_data(data):
     for row in data:
         text = row.get_text()
         text_list = [s.strip() for s in text.splitlines() if s != '']
-        if '' in text_list:
+        while '' in text_list:
             text_list.remove('')
         if len(text_list) > 3:
             text_list[2:len(text_list)] = [''.join(text_list[2:len(text_list)])]
@@ -63,14 +63,14 @@ def data_to_df_group(data):
     future_df = []
     row = []
     for publication in data:
-        authors_list = publication[1].split(', ')
+        authors_list = publication[1].split(',')
         year = get_year(publication)
         for i in range(len(authors_list)):
-            author = authors_list[i]
+            author = authors_list[i].lstrip()
             authors = authors_list[i + 1:]
             for coauthor in authors:
                 row = [author]
-                row.append(coauthor)
+                row.append(coauthor.lstrip())
                 row.append(year)
                 future_df.append(row[:])
 
@@ -103,11 +103,11 @@ def calculate_weights(cleaned_data, start_date=0, end_date=2019):
     """
     authors_publications_dic = {}
     for publication in cleaned_data:
-        authors_list = publication[1].split(', ')
+        authors_list = publication[1].split(',')
         year = get_year(publication)
         if (year >= start_date) & (year <= end_date):
             for author in authors_list:
-                add_to_dict(author, authors_publications_dic)
+                add_to_dict(author.lstrip(), authors_publications_dic)
     return authors_publications_dic
 
 
@@ -122,7 +122,8 @@ def add_to_dict(author, author_dict):
 
 def get_year(publication):
     """Helper function for extracting year from publication
-    description on website, returns year value"""
+    description on website, returns year value
+    """
     try:
         found = re.search(r'\((1|2)\d\d\d\)', publication[2]).group(0)
         found = int(found[1:5])
@@ -139,7 +140,9 @@ def count_by_year(data, author):
     years_counts_dict = {}
     years = []
     for publication in data:
-        authors_list = publication[1].split(', ')
+        authors_list = publication[1].split(',')
+        for i in range(len(authors_list)):
+            authors_list[i] = authors_list[i].lstrip()
         year = get_year(publication)
         if year >= 1960:
             if author in authors_list:
@@ -148,3 +151,9 @@ def count_by_year(data, author):
         values = [value for value in years_counts_dict.values()]
 
     return years, values
+
+def shorten_name(name):
+    """helper to make name fully visible in legend"""
+    name_surname = name.split()
+    new_name = name_surname[0][0] + '.' + name_surname[1]
+    return new_name
